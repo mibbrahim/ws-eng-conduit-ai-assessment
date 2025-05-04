@@ -154,12 +154,21 @@ export class ArticleService {
       { populate: ['followers', 'favorites', 'articles'] },
     );
     const article = new Article(user!, dto.title, dto.description, dto.body);
-    article.tagList.push(...dto.tagList);
-    user?.articles.add(article);
-    await this.em.flush();
+     let tagsArray: string[] = [];
 
-    return { article: article.toJSON(user!) };
+  if (typeof dto.tagList === 'string') {
+    tagsArray = dto.tagList.split(',').map(tag => tag.trim()).filter(tag => tag.length > 0);
+  } else if (Array.isArray(dto.tagList)) {
+    tagsArray = dto.tagList.map(tag => tag.trim()).filter(tag => tag.length > 0);
   }
+
+  article.tagList.push(...tagsArray);
+
+  user?.articles.add(article);
+  await this.em.flush();
+
+  return { article: article.toJSON(user!) };
+}
 
   async update(userId: number, slug: string, articleData: any): Promise<IArticleRO> {
     const user = await this.userRepository.findOne(
