@@ -5,6 +5,8 @@ import { Validators } from '@angular/forms';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { Store } from '@ngrx/store';
 import { articleActions, articleEditActions, articleQuery } from '@realworld/articles/data-access';
+import { take } from 'rxjs/operators';
+
 
 const structure: Field[] = [
   {
@@ -62,8 +64,16 @@ export class ArticleEditComponent implements OnInit, OnDestroy {
   }
 
   submit() {
-    this.store.dispatch(articleEditActions.publishArticle());
-  }
+  this.data$.pipe(take(1)).subscribe((formData: any) => {
+    const preparedData = {
+      ...formData,
+      tagList: formData.tagList
+        ? formData.tagList.split(',').map((tag: string) => tag.trim()).filter((tag: string) => tag.length > 0)
+        : [],
+    };
+    this.store.dispatch(articleEditActions.publishArticle({ article: preparedData }));
+  });
+}
 
   ngOnDestroy() {
     this.store.dispatch(formsActions.initializeForm());
